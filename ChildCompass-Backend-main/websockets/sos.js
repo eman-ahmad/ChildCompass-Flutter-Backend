@@ -15,7 +15,7 @@ function sosWebSocket(wss) {
                 childs[data.childId] = { ws, sosStatus: false };
 
             } else if (data.type === 'register_parent') {
-                console.log("Parent Registered for SOS: " + data.parentId);
+                console.log("Parent Registered for SOS: " + data.parentId, "Children:", data.targetchildId);
                 parents[data.parentId] = { ws, targetchildId: data.targetchildId };
 
             } else if (data.type === 'sos_update') {
@@ -29,7 +29,7 @@ function sosWebSocket(wss) {
                     // Broadcast to all parents watching this child
                     for (let parentId in parents) {
                         const parent = parents[parentId];
-                        if (parent.targetchildId.includes(childId)) {
+                        if  (parent.targetchildId === childId) {
                             parent.ws.send(JSON.stringify({
                                 type: 'sos_update',
                                 childId: childId,
