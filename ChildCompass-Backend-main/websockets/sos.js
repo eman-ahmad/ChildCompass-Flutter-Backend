@@ -23,13 +23,21 @@ function sosWebSocket(wss) {
                 const { childId, status } = data;
                 console.log(`SOS status from ${childId}: ${status}`);
 
+                const isActive = status === 'active';
+                console.log('Updating SOS state to:', isActive);
+                childs[childId].sosStatus = status; // already setting status
+                console.log('State updated successfully');
+
+
                 if (childs[childId]) {
                     childs[childId].sosStatus = status;
+
 
                     // Broadcast to all parents watching this child
                     for (let parentId in parents) {
                         const parent = parents[parentId];
-                        if  (parent.targetchildId === childId) {
+                        console.log("Comparing:", parent.targetchildId, childId);
+                        if (parent.targetchildId === childId) {
                             parent.ws.send(JSON.stringify({
                                 type: 'sos_update',
                                 childId: childId,
