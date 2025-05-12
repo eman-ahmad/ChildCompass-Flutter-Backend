@@ -1,5 +1,3 @@
-
-
 function sosWebSocket(wss) {
     let childs = {};
     let parents = {};
@@ -23,32 +21,30 @@ function sosWebSocket(wss) {
                 const { childId, status } = data;
                 console.log(`SOS status from ${childId}: ${status}`);
 
-                const isActive = status === 'active';
-                console.log('Updating SOS state to:', isActive);
-                childs[childId].sosStatus = status; // already setting status
+                // FIX: Check if child exists before updating status
+                if (!childs[childId]) {
+                    console.error(`Child ${childId} not registered`);
+                    return;
+                }
+
+                console.log('Updating SOS state to:', status === 'active');
+                childs[childId].sosStatus = status;
                 console.log('State updated successfully');
 
-
-                if (childs[childId]) {
-                    childs[childId].sosStatus = status;
-
-
-                    // Broadcast to all parents watching this child
-                    for (let parentId in parents) {
-                        const parent = parents[parentId];
-                        console.log("Comparing:", parent.targetchildId, childId);
-                        if (parent.targetchildId === childId) {
-                            parent.ws.send(JSON.stringify({
-                                type: 'sos_update',
-                                childId: childId,
-                                status: status
-                            }));
-                            console.log("SOS update sent to parent: " + parentId);
-                        }
+                // Broadcast to all parents watching this child
+                for (let parentId in parents) {
+                    const parent = parents[parentId];
+                    console.log("Comparing:", parent.targetchildId, childId);
+                    if (parent.targetchildId === childId) {
+                        parent.ws.send(JSON.stringify({
+                            type: 'sos_update',
+                            childId: childId,
+                            status: status
+                        }));
+                        console.log("SOS update sent to parent: " + parentId);
                     }
                 }
             }
-
         });
 
         ws.on('close', () => {
