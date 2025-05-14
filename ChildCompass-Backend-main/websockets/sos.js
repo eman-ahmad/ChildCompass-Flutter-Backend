@@ -9,8 +9,25 @@ function sosWebSocket(wss) {
       const data = JSON.parse(message);
 
       if (data.type === "register_child") {
-        console.log("Child Registered for SOS: " + data.childId);
+        console.log("Child Registered for Active Status: " + data.childId);
         childs[data.childId] = { ws, sosStatus: false };
+
+        // After registering the child, check if any parent is waiting for this child
+        for (let parentId in parents) {
+          const parent = parents[parentId];
+          if (parent.targetchildId === data.childId) {
+            // Send the current SOS status to this parent
+            const currentStatus = childs[data.childId].sosStatus;
+            parent.ws.send(
+              JSON.stringify({
+                type: "sos_update",
+                childId: data.childId,
+                status: currentStatus,
+              })
+            );
+            console.log("Initial SOS status sent to parent: " + currentStatus);
+          }
+        }
       } else if (data.type === "register_parent") {
         console.log(
           "Parent Registered for SOS: " + data.parentId,
@@ -19,7 +36,7 @@ function sosWebSocket(wss) {
         );
         parents[data.parentId] = { ws, targetchildId: data.targetchildId };
 
-        // Send current SOS status if available
+        // Check if the child is already registered and send the SOS status
         const childId = data.targetchildId;
         if (childs[childId]) {
           const currentStatus = childs[childId].sosStatus;
