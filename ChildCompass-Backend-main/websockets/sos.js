@@ -59,6 +59,15 @@ function sosWebSocket(wss) {
             }
         });
     });
+
+    setInterval(() => {
+        wss.clients.forEach((client) => {
+            if (client.readyState === 1) { // 1 = OPEN
+                client.send(JSON.stringify({ type: 'ping' }));
+            }
+        });
+    }, 30000);
 }
+
 
 module.exports = sosWebSocket;
