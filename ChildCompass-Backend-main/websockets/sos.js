@@ -1,3 +1,6 @@
+const admin = require("./firebase"); // import Firebase Admin
+const Parent = require("./models/Parent"); 
+
 function sosWebSocket(wss) {
   let childs = {};
   let parents = {};
@@ -5,7 +8,7 @@ function sosWebSocket(wss) {
   wss.on("connection", (ws) => {
     console.log("SOS WebSocket connected");
 
-    ws.on("message", (message) => {
+    ws.on("message", async(message) => {
       const data = JSON.parse(message);
 
       if (data.type === "register_child") {
@@ -82,6 +85,32 @@ function sosWebSocket(wss) {
               })
             );
             console.log("SOS update sent to parent: " + parentId);
+             try {
+        const parentDoc = await Parent.findById(parentId);
+        if (parentDoc?.fcm) {
+          const message = {
+            notification: {
+              title: "🚨 SOS Alert",
+              body: `Child ${childId} triggered an SOS alert.`,
+              sound: "default",
+            },
+            token: parentDoc.fcm,
+            data: {
+              type: "sos",
+              childId,
+              status,
+            },
+          };
+
+          await admin.messaging().send(message);
+          console.log(`FCM sent to parent ${parentId}`);
+        } else {
+          console.warn(`No FCM token for parent ${parentId}`);
+        }
+      } catch (err) {
+        console.error("Error sending FCM to parent:", parentId, err);
+      }
+    
           }
         }
       }
